@@ -1,0 +1,18 @@
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { supabase } from '../lib/supabase.js';
+
+let { data, error } = await supabase.from("products").select("*");
+
+let products = data ?? [];
+---
+---
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ProductCard from '../components/ProductCard.astro';
+import { supabase } from '../lib/supabase.js';
+
+let { data, error } = await supabase.from("products").select("*");
+
+let products = data ?? [];
+---

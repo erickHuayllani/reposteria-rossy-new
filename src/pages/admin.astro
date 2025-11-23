@@ -1,0 +1,94 @@
+---
+import { supabase } from '../lib/supabase.js';
+
+let message = "";
+
+// Form (crear o eliminar)
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const action = form.get("_action");
+
+  // Crear
+  if (action === "create") {
+    const name = form.get("name");
+    const price = form.get("price");
+    const description = form.get("description");
+    const image = form.get("image");
+
+    const { error } = await supabase.from("productos").insert([
+      { name, price: price ? Number(price) : 0, description, image }
+    ]);
+
+    message = error ? `Error: ${error.message}` : "Producto agregado correctamente!";
+  }
+
+  // Eliminar
+  if (action === "delete") {
+    const id = form.get("id");
+
+    const { error } = await supabase.from("productos").delete().eq("id", id);
+
+    message = error ? `Error eliminando: ${error.message}` : "Producto eliminado!";
+  }
+}
+
+// Cargar productos
+const { data: products, error } = await supabase.from("productos").select("*");
+---
+<html>
+  <body style="font-family: sans-serif; padding: 24px;">
+    <h1>Panel Admin — Productos</h1>
+
+    <p style="color: green;">{message}</p>
+
+    <!-- Crear producto -->
+    <h2>Crear producto</h2>
+    <form method="POST">
+      <input type="hidden" name="_action" value="create" />
+
+      <label>Nombre</label><br />
+      <input name="name" required /><br /><br />
+
+      <label>Precio</label><br />
+      <input name="price" type="number" /><br /><br />
+
+      <label>Descripción</label><br />
+      <textarea name="description"></textarea><br /><br />
+
+      <label>Imagen (URL)</label><br />
+      <input name="image" /><br /><br />
+
+      <button type="submit">Crear</button>
+    </form>
+
+    <hr />
+
+    <!-- Lista -->
+    <h2>Productos existentes</h2>
+
+    {products?.length === 0 ? (
+      <p>No hay productos todavía.</p>
+    ) : (
+      <ul>
+        {products.map(p => (
+          <li style="margin-bottom: 12px;">
+            <strong>{p.name}</strong> — S/ {p.price}<br />
+            <small>{p.description}</small><br />
+
+            {p.image && <img src={p.image} style="width:120px;" />}
+
+            <div style="margin-top: 6px;">
+              <a href={`/admin/edit?id=${p.id}`}>Editar</a>
+              &nbsp;|&nbsp;
+              <form method="POST" style="display:inline;">
+                <input type="hidden" name="_action" value="delete" />
+                <input type="hidden" name="id" value={p.id} />
+                <button type="submit" style="color:red;">Eliminar</button>
+              </form>
+            </div>
+          </li>
+        ))}
+      </ul>
+    )}
+  </body>
+</html>
