@@ -2,17 +2,23 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import { supabase } from '../lib/supabase.js';
+console.log("SUPABASE ERROR:", error);
+console.log("SUPABASE DATA:", data);
 
-let { data, error } = await supabase.from("products").select("*");
-
-let products = data ?? [];
----
----
-import BaseLayout from '../layouts/BaseLayout.astro';
-import ProductCard from '../components/ProductCard.astro';
-import { supabase } from '../lib/supabase.js';
-
-let { data, error } = await supabase.from("products").select("*");
+let { data, error } = await supabase
+  .from("productos")
+  .select("*");
 
 let products = data ?? [];
 ---
+<BaseLayout title="Catálogo - Repostería D'Rossy">
+  <link rel="stylesheet" href="/src/styles/catalogo.css" />
+
+  <h1 class="text-3xl font-bold mb-4">Catálogo</h1>
+
+  <div class="grid-card">
+    {products.map(p => (
+      <ProductCard product={p} />
+    ))}
+  </div>
+</BaseLayout>
