@@ -2,9 +2,6 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import { supabase } from '../lib/supabase.js';
-console.log("SUPABASE ERROR:", error);
-console.log("SUPABASE DATA:", data);
-
 let { data, error } = await supabase
   .from("productos")
   .select("*");
