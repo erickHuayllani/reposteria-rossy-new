@@ -1,46 +1,18 @@
+Guardame este code: ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ProductCard from '../components/ProductCard.astro';
 import { supabase } from '../lib/supabase.js';
 
-// Productos estáticos (como ejemplo, agregamos 6 productos)
-const staticProducts = [
-  {
-    name: "Pastel Bob Esponja",
-    description: "Decorado con fondant",
-    price: 60.00,
-    imageUrl: "/path/to/bob-esponja-image.jpg", // Asegúrate de usar la ruta correcta de tus imágenes
-  },
-  {
-    name: "Torta Corona",
-    description: "Decorada con frutas y crema",
-    price: 55.00,
-    imageUrl: "/path/to/torta-corona-image.jpg", // Asegúrate de usar la ruta correcta de tus imágenes
-  },
-  {
-    name: "Pastel de Chocolate",
-    description: "Relleno con ganache suave",
-    price: 52.00,
-    imageUrl: "/path/to/pastel-chocolate-image.jpg", // Asegúrate de usar la ruta correcta de tus imágenes
-  },
-  {
-    name: "Pastel de Frutas",
-    description: "Ligero y con frutas frescas",
-    price: 48.00,
-    imageUrl: "/path/to/pastel-frutas-image.jpg", // Asegúrate de usar la ruta correcta de tus imágenes
-  },
-  {
-    name: "Torta Helada",
-    description: "Llévalo hasta tu puerta",
-    price: 10.00,
-    imageUrl: "/path/to/torta-helada-image.jpg", // Asegúrate de usar la ruta correcta de tus imágenes
-  },
-  {
-    name: "Pastel Pokémon",
-    description: "Feliz Cumpleaños Edu",
-    price: 50.00,
-    imageUrl: "/path/to/pastel-pokemon-image.jpg", // Asegúrate de usar la ruta correcta de tus imágenes
-  },
-];
+// Obtener productos desde Supabase
+const { data: products, error } = await supabase
+  .from("productos")
+  .select("*")
+  .order("created_at", { ascending: false });
+
+if (error) {
+  console.error("Error cargando productos:", error);
+}
+---
 
 <BaseLayout title="Catálogo - Repostería D'Rossy">
   <link rel="stylesheet" href="/src/styles/catalogo.css" />
@@ -48,11 +20,10 @@ const staticProducts = [
   <h1 class="text-3xl font-bold mb-4">Catálogo</h1>
 
   <div class="grid-card">
-    {staticProducts?.length > 0 ? (
-      staticProducts.map((p) => <ProductCard product={p} />)
+    {products?.length > 0 ? (
+      products.map((p) => <ProductCard product={p} />)
     ) : (
       <p class="text-gray-500 text-lg">No hay productos disponibles.</p>
     )}
   </div>
 </BaseLayout>
-
