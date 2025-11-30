@@ -1,0 +1,79 @@
+---
+// src/pages/historial.astro
+import { createClient } from '@supabase/supabase-js';
+import Layout from '../layouts/BaseLayout.astro';
+
+const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
+const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
+const supabase = createClient(supabaseUrl, supabaseKey);
+
+// Obtener usuario actual
+const { data: { user } } = await supabase.auth.getUser();
+
+let pedidos = [];
+if (user) {
+  const { data } = await supabase
+    .from('pedidos')
+    .select('*')
+    .eq('user_id', user.id)
+    .order('fecha_creacion', { ascending: false });
+  pedidos = data || [];
+}
+---
+
+<Layout title="Historial de Pedidos">
+  <div class="container mx-auto px-4 py-8">
+    <h1 class="text-3xl font-bold mb-8">Mis Pedidos</h1>
+    
+    {!user ? (
+      <div class="text-center">
+        <p class="text-lg mb-4">Inicia sesión para ver tu historial de pedidos</p>
+        <a href="/login" class="btn-primary">Iniciar Sesión</a>
+      </div>
+    ) : pedidos.length === 0 ? (
+      <div class="text-center">
+        <p class="text-lg">No tienes pedidos aún</p>
+        <a href="/catalogo" class="btn-primary mt-4">Ver Catálogo</a>
+      </div>
+    ) : (
+      <div class="space-y-6">
+        {pedidos.map(pedido => (
+          <div class="bg-white rounded-lg shadow-md p-6 border">
+            <div class="flex justify-between items-start mb-4">
+              <div>
+                <h3 class="text-xl font-semibold">Pedido #{pedido.id}</h3>
+                <p class="text-gray-600">
+                  {new Date(pedido.fecha_creacion).toLocaleDateString('es-ES')}
+                </p>
+              </div>
+              <span class={`px-3 py-1 rounded-full text-sm font-medium ${
+                pedido.estado === 'completado' ? 'bg-green-100 text-green-800' :
+                pedido.estado === 'pendiente' ? 'bg-yellow-100 text-yellow-800' :
+                'bg-gray-100 text-gray-800'
+              }`}>
+                {pedido.estado}
+              </span>
+            </div>
+            
+            <div class="mb-4">
+              <h4 class="font-semibold mb-2">Productos:</h4>
+              <div class="space-y-2">
+                {JSON.parse(pedido.productos).map((producto, index) => (
+                  <div key={index} class="flex justify-between">
+                    <span>{producto.nombre} x {producto.cantidad}</span>
+                    <span>${producto.precio * producto.cantidad}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+            
+            <div class="flex justify-between items-center border-t pt-4">
+              <span class="font-semibold">Total:</span>
+              <span class="text-xl font-bold">${pedido.total}</span>
+            </div>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</Layout>

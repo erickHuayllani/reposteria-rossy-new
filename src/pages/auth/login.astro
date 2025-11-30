@@ -1,32 +1,46 @@
 ---
-import { supabase } from "../../lib/supabase";
-
-let message = "";
-
-if (Astro.request.method === "POST") {
-  const form = await Astro.request.formData();
-  const email = form.get("email");
-  const password = form.get("password");
-
-  const { data, error } = await supabase.auth.signInWithPassword({
-    email,
-    password,
-  });
-
-  if (error) {
-    message = error.message;
-  } else {
-    message = "Login correcto";
-  }
-}
+import BaseLayout from "../../layouts/BaseLayout.astro";
 ---
 
-<h1>Login</h1>
+<BaseLayout title="Iniciar Sesión">
+  <section class="min-h-screen flex items-center justify-center bg-rose-50">
+    <div class="bg-white p-8 rounded-2xl shadow max-w-md w-full">
+      <h1 class="text-2xl font-bold mb-6 text-rose-600 text-center">Iniciar Sesión</h1>
 
-{message && <p>{message}</p>}
+      <form id="login-form" class="space-y-4">
+        <input type="email" id="email" placeholder="Correo" class="w-full p-3 border rounded-lg" required />
+        <input type="password" id="password" placeholder="Contraseña" class="w-full p-3 border rounded-lg" required />
+        <button class="w-full bg-rose-500 text-white py-3 rounded-lg">Entrar</button>
+      </form>
 
-<form method="POST">
-  <input type="email" name="email" placeholder="Correo" />
-  <input type="password" name="password" placeholder="Contraseña" />
-  <button type="submit">Ingresar</button>
-</form>
+      <p class="mt-4 text-sm text-center">
+        ¿No tienes cuenta?
+        <a href="/auth/register" class="text-rose-600 underline">Crear cuenta</a>
+      </p>
+    </div>
+  </section>
+
+  <script type="module">
+    import { supabase } from "../../lib/supabase.js";
+
+    document.getElementById("login-form").addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) {
+        alert("Error: " + error.message);
+        return;
+      }
+
+      alert("Inicio de sesión exitoso!");
+      window.location.href = "/"; // redirige al inicio
+    });
+  </script>
+</BaseLayout>
