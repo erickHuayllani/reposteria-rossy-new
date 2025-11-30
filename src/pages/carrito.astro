@@ -1,6 +1,14 @@
 ---
 import BaseLayout from "../layouts/BaseLayout.astro";
+import { supabase } from "../lib/supabase.js";
+
+let { data: products, error } = await supabase
+  .from("productos")
+  .select("*");
+
+if (!products) products = [];
 ---
+
 <BaseLayout title="Carrito - Repostería D'Rossy">
   <link rel="stylesheet" href="/src/styles/carrito.css" />
 
@@ -10,7 +18,8 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     </h1>
 
     <div class="grid md:grid-cols-3 gap-10">
-      <!-- 🧸 Productos -->
+      
+      <!-- 🧸 PRODUCTOS DESDE SUPABASE -->
       <div class="md:col-span-2">
         <div class="bg-white p-6 rounded-2xl shadow-lg">
           <h2 class="text-2xl font-semibold mb-6 text-rose-600">
@@ -18,64 +27,33 @@ import BaseLayout from "../layouts/BaseLayout.astro";
           </h2>
 
           <div id="product-list" class="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
-            <!-- EJEMPLOS -->
-            <article class="product-card" data-id="1" data-name="Pastel Bob Esponja" data-price="60" data-img="/img/bob esponja.png">
-              <img src="/img/bob esponja.png" alt="Pastel Bob Esponja" />
-              <h3>Pastel Bob Esponja</h3>
-              <p>Decorado con fondant.</p>
-              <div class="bottom">
-                <span class="price">$60.00</span>
-                <button class="add-btn">Agregar</button>
-              </div>
-            </article>
 
-            <article class="product-card" data-id="2" data-name="Torta Corona" data-price="55" data-img="/img/corona.png">
-              <img src="/img/corona.png" alt="Torta Corona" />
-              <h3>Torta Corona</h3>
-              <p>Decorada con frutas y crema.</p>
+          {products.map(p => (
+            <article class="product-card" 
+              data-id={p.id}
+              data-name={p.nombre}
+              data-price={p.precio}
+              data-img={p.imagen}
+            >
+              <img src={p.imagen} alt={p.nombre} />
+              <h3>{p.nombre}</h3>
+              <p>{p.descripcion}</p>
               <div class="bottom">
-                <span class="price">$55.00</span>
+                <span class="price">${p.precio.toFixed(2)}</span>
                 <button class="add-btn">Agregar</button>
               </div>
             </article>
+          ))}
 
-            <article class="product-card" data-id="3" data-name="Pastel de Chocolate" data-price="52" data-img="/img/pastelchoco.png">
-              <img src="/img/pastelPollo.png" alt="Pastel de Chocolate" />
-              <h3>Pastel de Chocolate</h3>
-              <p>Relleno con ganache suave.</p>
-              <div class="bottom">
-                <span class="price">$52.00</span>
-                <button class="add-btn">Agregar</button>
-              </div>
-            </article>
-
-            <article class="product-card" data-id="4" data-name="Pastel de Frutas" data-price="48" data-img="/img/pastelfrutas.png">
-              <img src="/img/Pokemom.png" alt="Pastel de Frutas" />
-              <h3>Pastel de Frutas</h3>
-              <p>Ligero y con frutas frescas.</p>
-              <div class="bottom">
-                <span class="price">$48.00</span>
-                <button class="add-btn">Agregar</button>
-              </div>
-            </article>
-
-            <article class="product-card" data-id="5" data-name="Delivery Rápido" data-price="10" data-img="/img/deliveryyy.png">
-              <img src="/img/tortahelada.jpg" alt="Delivery Rápido" />
-              <h3>Torta Helada</h3>
-              <p>"Llévalo hasta tu puerta"</p>
-              <div class="bottom">
-                <span class="price">$10.00</span>
-                <button class="add-btn">Agregar</button>
-              </div>
-            </article>
           </div>
         </div>
       </div>
 
-      <!-- 🛒 Carrito -->
+      <!-- 🛒 CARRITO -->
       <div class="bg-white p-6 rounded-2xl shadow-lg h-fit sticky top-6">
         <h2 class="text-xl font-semibold mb-3 text-rose-700">Tu pedido 🛍️</h2>
         <ul id="cart-list" class="space-y-3"></ul>
+
         <div class="border-t mt-4 pt-3 flex justify-between items-center">
           <strong>Total:</strong> <span id="total" class="text-lg font-bold">$0.00</span>
         </div>
@@ -85,7 +63,6 @@ import BaseLayout from "../layouts/BaseLayout.astro";
             Vaciar carrito
           </button>
 
-          <!-- 🧾 Ir a pagar -->
           <button id="checkout-btn" class="w-full bg-gradient-to-r from-rose-500 to-pink-500 text-white py-3 rounded-xl text-lg font-semibold shadow hover:opacity-90 transition-all">
             💳 Ir a pagar
           </button>
@@ -94,12 +71,13 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     </div>
   </section>
 
-  <!-- 🔧 Script del carrito -->
+  <!-- 🔧 SCRIPT DEL CARRITO -->
   <script is:inline>
     const cartList = document.getElementById('cart-list');
     const totalSpan = document.getElementById('total');
     const clearBtn = document.getElementById('clear-cart');
     const checkoutBtn = document.getElementById('checkout-btn');
+    
     let cart = JSON.parse(localStorage.getItem('cart') || '[]');
 
     function saveCart() {
@@ -110,93 +88,119 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     function renderCart() {
       cartList.innerHTML = '';
       let total = 0;
+
       cart.forEach(item => {
         const li = document.createElement('li');
         li.className = 'flex items-center justify-between bg-rose-50 p-3 rounded-lg shadow-sm';
+
         li.innerHTML = `
           <div class="flex items-center gap-3">
-            <img src="${item.img}" alt="${item.name}" class="w-12 h-12 rounded-md object-cover"/>
+            <img src="${item.img}" class="w-12 h-12 rounded-md object-cover" />
             <div>
               <strong>${item.name}</strong><br>
               <small>$${item.price} x ${item.qty}</small>
             </div>
           </div>
+
           <div class="flex gap-2">
             <button class="text-sm bg-gray-200 px-2 rounded" data-action="decrease">-</button>
             <button class="text-sm bg-gray-200 px-2 rounded" data-action="increase">+</button>
             <button class="text-sm bg-red-400 text-white px-2 rounded" data-action="remove">🗑</button>
           </div>
         `;
-        li.querySelectorAll('button').forEach(btn => {
-          btn.addEventListener('click', () => handleAction(item.id, btn.dataset.action));
+
+        li.querySelectorAll("button").forEach(btn => {
+          btn.addEventListener("click", () => handleAction(item.id, btn.dataset.action));
         });
+
         cartList.appendChild(li);
         total += item.price * item.qty;
       });
+
       totalSpan.textContent = `$${total.toFixed(2)}`;
     }
 
     function handleAction(id, action) {
-      const item = cart.find(p => p.id === id);
+      const item = cart.find(p => p.id == id);
       if (!item) return;
-      if (action === 'increase') item.qty++;
-      if (action === 'decrease') item.qty = Math.max(1, item.qty - 1);
-      if (action === 'remove') cart = cart.filter(p => p.id !== id);
+
+      if (action === "increase") item.qty++;
+      if (action === "decrease") item.qty = Math.max(1, item.qty - 1);
+      if (action === "remove") cart = cart.filter(p => p.id != id);
+
       saveCart();
     }
 
-    document.querySelectorAll('.add-btn').forEach(btn => {
-      btn.addEventListener('click', e => {
-        const card = e.target.closest('.product-card');
+    document.querySelectorAll(".add-btn").forEach(btn => {
+      btn.addEventListener("click", e => {
+        const card = e.target.closest(".product-card");
+
         const id = card.dataset.id;
-        const existing = cart.find(p => p.id === id);
+        const existing = cart.find(p => p.id == id);
+
         if (existing) {
           existing.qty++;
         } else {
           cart.push({
             id,
             name: card.dataset.name,
-            price: parseFloat(card.dataset.price),
+            price: Number(card.dataset.price),
             img: card.dataset.img,
-            qty: 1
+            qty: 1,
           });
         }
+
         saveCart();
       });
     });
 
-    clearBtn.addEventListener('click', () => {
+    clearBtn.addEventListener("click", () => {
       cart = [];
       saveCart();
     });
 
-    // 👉 Función del botón "Ir a pagar"
-    checkoutBtn.addEventListener('click', () => {
+    /* 🧾 CHECKOUT FINAL */
+    checkoutBtn.addEventListener("click", async () => {
       if (cart.length === 0) {
         alert("🧺 Tu carrito está vacío.");
         return;
       }
-      const total = totalSpan.textContent;
-      alert(`🎉 Gracias por tu compra!\nTotal a pagar: ${total}\n\n(Próximamente redirigiremos al pago 💳)`);
-      // Aquí podrías redirigir, ejemplo:
-      // window.location.href = "/pago";
+
+      const payload = {
+        items: cart.map(item => ({
+          id: item.id,
+          quantity: item.qty,
+          price: item.price
+        })),
+        total: cart.reduce((s, i) => s + i.price * i.qty, 0)
+      };
+
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json();
+
+      if (data.error) {
+        alert("❌ Error al procesar el pago: " + data.error);
+        return;
+      }
+
+      alert("🎉 Pedido registrado con éxito! ID: " + data.orderId);
+
+      cart = [];
+      saveCart();
     });
 
     renderCart();
   </script>
 
   <style>
-    .product-card {
-      @apply flex flex-col bg-rose-50 rounded-2xl p-4 shadow transition-transform hover:scale-105 hover:shadow-lg;
-    }
-    .product-card img {
-      @apply rounded-xl w-full h-40 object-cover mb-2;
-    }
-    .bottom {
-      @apply flex justify-between items-center mt-2;
-    }
-    .add-btn {
-      @apply bg-rose-500 text-white px-3 py-1 rounded-lg hover:bg-rose-600 transition;
-    }
+    .product-card { @apply flex flex-col bg-rose-50 rounded-2xl p-4 shadow hover:scale-105 transition; }
+    .product-card img { @apply rounded-xl w-full h-40 object-cover mb-2; }
+    .bottom { @apply flex justify-between items-center mt-2; }
+    .add-btn { @apply bg-rose-500 text-white px-3 py-1 rounded-lg hover:bg-rose-600 transition; }
   </style>
 </BaseLayout>

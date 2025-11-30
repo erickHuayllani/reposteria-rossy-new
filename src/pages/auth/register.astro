@@ -1,0 +1,25 @@
+---
+import { supabase } from "../../lib/supabase";
+
+let message = "";
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const email = form.get("email");
+  const password = form.get("password");
+
+  const { error } = await supabase.auth.signUp({ email, password });
+
+  message = error ? error.message : "Usuario creado correctamente";
+}
+---
+
+<h1>Registro</h1>
+
+{message && <p>{message}</p>}
+
+<form method="POST">
+  <input type="email" name="email" placeholder="Correo" required />
+  <input type="password" name="password" placeholder="Contraseña" required />
+  <button type="submit">Registrarse</button>
+</form>

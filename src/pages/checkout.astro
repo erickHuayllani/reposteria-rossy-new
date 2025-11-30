@@ -1,0 +1,69 @@
+---
+import { supabase } from "../lib/supabase";
+
+const session = await supabase.auth.getSession();
+
+if (!session.data.session) {
+  throw Astro.redirect("/auth/login");
+}
+
+const user_id = session.data.session.user.id;
+
+let message = "";
+
+if (Astro.request.method === "POST") {
+  const cart = JSON.parse(await Astro.request.text());
+
+  // 1️⃣ Crear pedido
+  const { data: order, error: orderError } = await supabase
+    .from("orders")
+    .insert([{ user_id, total: cart.total }])
+    .select()
+    .single();
+
+  // 2️⃣ Insertar items
+  const items = cart.items.map(i => ({
+    order_id: order.id,
+    product_id: i.id,
+    quantity: i.quantity,
+  }));
+
+  await supabase.from("order_items").insert(items);
+
+  message = "Pedido registrado correctamente";
+}
+---
+
+<h1>Checkout</h1>
+
+<p>{message}</p>
+
+<button onclick="finishOrder()">Confirmar pedido</button>
+
+<script>
+  async function finishOrder() {
+    const cart = JSON.parse(localStorage.getItem("cart") || "[]");
+    // Construimos el objeto que enviamos al server
+    const payload = {
+      user_id: null, // o el id real si el usuario está logueado
+      total: cart.reduce((s, i) => s + i.price * i.qty, 0),
+      items: cart.map(i => ({ id: i.id, quantity: i.qty, price: i.price }))
+    };
+
+    const res = await fetch("/api/checkout", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(payload)
+    });
+
+    const data = await res.json();
+    if (res.ok) {
+      localStorage.removeItem("cart");
+      alert("Pedido registrado con id: " + data.orderId);
+      // redirigir a historial, gracias, etc.
+      window.location.href = "/mis-pedidos";
+    } else {
+      alert("Error al crear el pedido: " + (data.error || "desconocido"));
+    }
+  }
+</script>

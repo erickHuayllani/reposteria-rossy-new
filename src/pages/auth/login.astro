@@ -1,0 +1,32 @@
+---
+import { supabase } from "../../lib/supabase";
+
+let message = "";
+
+if (Astro.request.method === "POST") {
+  const form = await Astro.request.formData();
+  const email = form.get("email");
+  const password = form.get("password");
+
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
+
+  if (error) {
+    message = error.message;
+  } else {
+    message = "Login correcto";
+  }
+}
+---
+
+<h1>Login</h1>
+
+{message && <p>{message}</p>}
+
+<form method="POST">
+  <input type="email" name="email" placeholder="Correo" />
+  <input type="password" name="password" placeholder="Contraseña" />
+  <button type="submit">Ingresar</button>
+</form>
