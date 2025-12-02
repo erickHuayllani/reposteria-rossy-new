@@ -11,16 +11,12 @@ if (!session) {
   throw Astro.redirect("/auth/login");
 }
 
-// ⚠️ Aquí debes poner el correo de la dueña
+// ⚠️ Correo de la dueña
 const OWNER_EMAIL = "rossy@gmail.com";
 
+// Si no es la dueña → redirigir sin Astro.render
 if (session.user.email !== OWNER_EMAIL) {
-  return (
-    <BaseLayout title="Acceso denegado">
-      <h1 class="text-red-600 text-2xl font-bold">Acceso denegado</h1>
-      <p>No tienes permisos para ver esta sección.</p>
-    </BaseLayout>
-  );
+  throw Astro.redirect("/auth/login");
 }
 
 // ░░ Obtener pedidos con detalle completo ░░
@@ -43,9 +39,7 @@ const { data: orders, error } = await supabase
     )
   `)
   .order("created_at", { ascending: false });
-
 ---
-
 
 <BaseLayout title="Panel de pedidos">
   <h1 class="text-3xl font-bold mb-6">Pedidos de clientes</h1>
@@ -114,9 +108,7 @@ const { data: orders, error } = await supabase
 
         <!-- WhatsApp -->
         <a
-          href={`https://wa.me/51?#{
-            order.users?.email
-          }?text=Hola! tu pedido #${order.id} está listo 😀🍰`}
+          href={`https://wa.me/51?text=Hola! tu pedido #${order.id} está listo 😀🍰`}
           target="_blank"
           class="mt-3 inline-block text-white bg-blue-500 px-3 py-2 rounded-lg"
         >
