@@ -1,4 +1,3 @@
-export const prerender = false;
 import { supabaseAdmin } from "../../lib/supabaseAdmin.js";
 
 export async function POST({ request }) {
@@ -15,7 +14,6 @@ export async function POST({ request }) {
       cart.total ??
       cart.items.reduce((s, it) => s + it.price * it.quantity, 0);
 
-    // INSERTAR ORDER
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
       .insert([
@@ -34,7 +32,6 @@ export async function POST({ request }) {
       });
     }
 
-    // INSERTAR ITEMS
     const items = cart.items.map((i) => ({
       order_id: order.id,
       product_id: i.id,
