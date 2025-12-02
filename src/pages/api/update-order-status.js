@@ -1,4 +1,5 @@
-import { supabase } from "../../../lib/supabase.js";
+import supabase from "../../lib/supabase.js";
+import supabaseAdmin from "../../lib/supabaseAdmin.js";
 
 export async function POST({ request }) {
   const form = await request.formData();
