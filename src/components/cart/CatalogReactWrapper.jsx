@@ -1,11 +1,11 @@
 import React from "react";
 import { CartProvider } from "../../contexts/CartContext.jsx";
-import CartPage from "./CartPage.jsx";
+import Catalog from "../catalog/Catalog.jsx";
 
-export default function CartClient() {
+export default function CatalogReactWrapper() {
   return (
     <CartProvider>
-      <CartPage />
+      <Catalog />
     </CartProvider>
   );
 }
