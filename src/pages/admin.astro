@@ -1,21 +1,20 @@
 ---
 import { createClient } from '@supabase/supabase-js';
-import Layout from '../layouts/Layout.astro';
+import BaseLayout from "../layouts/BaseLayout.astro";
 
 const supabaseUrl = import.meta.env.PUBLIC_SUPABASE_URL;
 const supabaseKey = import.meta.env.PUBLIC_SUPABASE_ANON_KEY;
 const supabase = createClient(supabaseUrl, supabaseKey);
 
-// =======================
-//  1) AUTENTICACIÓN
-// =======================
+// ======================================
+// 1) AUTENTICACIÓN
+// ======================================
 const { data: { user } } = await supabase.auth.getUser();
-
 let message = "";
 
-// =======================
-//  2) FORM PRODUCTOS
-// =======================
+// ======================================
+// 2) PROCESAR FORMULARIOS (POST)
+// ======================================
 if (Astro.request.method === "POST") {
   const form = await Astro.request.formData();
   const action = form.get("_action");
@@ -43,47 +42,56 @@ if (Astro.request.method === "POST") {
     message = error ? `Error eliminando: ${error.message}` : "Producto eliminado!";
   }
 
-  // Cambiar estado pedido
+  // Cambiar estado del pedido
   if (action === "cambiar_estado") {
     const pedidoId = form.get('pedido_id');
     const nuevoEstado = form.get('estado');
 
-    await supabase
-      .from('pedidos')
-      .update({ estado: nuevoEstado })
-      .eq('id', pedidoId);
+    await supabase.from('pedidos').update({ estado: nuevoEstado }).eq('id', pedidoId);
 
     return Astro.redirect('/admin');
   }
 }
 
-// =======================
-//  3) CARGAR PRODUCTOS
-// =======================
+// ======================================
+// 3) CARGAR PRODUCTOS
+// ======================================
 const { data: products } = await supabase.from("productos").select("*");
 
-// =======================
-//  4) CARGAR PEDIDOS
-// =======================
+// ======================================
+// 4) CARGAR PEDIDOS
+// ======================================
 let pedidos = [];
 if (user) {
   const { data } = await supabase
     .from('pedidos')
     .select(`
       *,
-      usuarios:user_id (
-        email
-      )
+      usuarios:user_id ( email )
     `)
     .order('fecha_creacion', { ascending: false });
 
   pedidos = data || [];
 }
+
+// ======================================
+// 5) PROCESAR PRODUCTOS DE LOS PEDIDOS
+// ======================================
+pedidos = pedidos.map(p => ({
+  ...p,
+  listaProductos: (() => {
+    try {
+      const arr = JSON.parse(p.productos);
+      return arr.map(x => `${x.nombre} (x${x.cantidad})`).join(", ");
+    } catch {
+      return "—";
+    }
+  })()
+}));
 ---
 
-<Layout title="Panel de Administración">
+<BaseLayout title="Panel de Administración">
   <div class="container mx-auto px-4 py-8">
-
     <h1 class="text-3xl font-bold mb-8">Panel de Administración</h1>
 
     {!user ? (
@@ -94,14 +102,12 @@ if (user) {
     ) : (
       <>
         <!-- ================================= -->
-        <!--     SECCIÓN: PRODUCTOS            -->
+        <!--         GESTIÓN DE PRODUCTOS      -->
         <!-- ================================= -->
-
         <h2 class="text-2xl font-bold mb-4">Gestión de Productos</h2>
 
         {message && <p style="color: green;">{message}</p>}
 
-        <!-- Form crear producto -->
         <form method="POST" class="bg-white p-6 rounded shadow-md mb-8">
           <input type="hidden" name="_action" value="create" />
 
@@ -145,9 +151,8 @@ if (user) {
         <hr class="my-10" />
 
         <!-- ================================= -->
-        <!--         SECCIÓN: PEDIDOS          -->
+        <!--              PEDIDOS              -->
         <!-- ================================= -->
-
         <h2 class="text-2xl font-bold mb-4">Pedidos</h2>
 
         <div class="bg-white rounded-lg shadow-md overflow-hidden">
@@ -170,9 +175,7 @@ if (user) {
                   <tr key={pedido.id}>
                     <td class="table-td">#{pedido.id}</td>
                     <td class="table-td">{pedido.usuarios?.email || 'N/A'}</td>
-                    <td class="table-td">
-                      {JSON.parse(pedido.productos).map(p => `${p.nombre} (x${p.cantidad})`).join(', ')}
-                    </td>
+                    <td class="table-td">{pedido.listaProductos}</td>
                     <td class="table-td">S/ {pedido.total}</td>
                     <td class="table-td">{pedido.estado}</td>
                     <td class="table-td">{pedido.fecha_creacion}</td>
@@ -183,12 +186,8 @@ if (user) {
                         <input type="hidden" name="pedido_id" value={pedido.id} />
 
                         <select name="estado" class="input">
-                          <option value="pendiente" selected={pedido.estado === "pendiente"}>
-                            Pendiente
-                          </option>
-                          <option value="completado" selected={pedido.estado === "completado"}>
-                            Completado
-                          </option>
+                          <option value="pendiente" selected={pedido.estado === "pendiente"}>Pendiente</option>
+                          <option value="completado" selected={pedido.estado === "completado"}>Completado</option>
                         </select>
 
                         <button class="btn-primary ml-2">Actualizar</button>
@@ -201,8 +200,7 @@ if (user) {
             </table>
           </div>
         </div>
-
       </>
     )}
   </div>
-</Layout>
+</BaseLayout>

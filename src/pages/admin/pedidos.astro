@@ -8,15 +8,23 @@ const {
 } = await supabase.auth.getSession();
 
 if (!session) {
-  throw Astro.redirect("/auth/login");
+  return Astro.redirect("/auth/login");
 }
 
 // ⚠️ Correo de la dueña
 const OWNER_EMAIL = "rossy@gmail.com";
 
-// Si no es la dueña → redirigir sin Astro.render
 if (session.user.email !== OWNER_EMAIL) {
-  throw Astro.redirect("/auth/login");
+  return new Response(
+    await Astro.render(BaseLayout, {
+      title: "Acceso denegado",
+      children: `
+        <h1 class="text-red-600 text-2xl font-bold">Acceso denegado</h1>
+        <p>No tienes permisos para ver esta sección.</p>
+      `,
+    }),
+    { status: 403 }
+  );
 }
 
 // ░░ Obtener pedidos con detalle completo ░░
@@ -67,7 +75,9 @@ const { data: orders, error } = await supabase
               <img
                 src={item.productos.imagen}
                 class="w-14 h-14 rounded-lg object-cover"
+                alt="Imagen del producto"
               />
+
               <div>
                 <p class="font-semibold">{item.productos.nombre}</p>
                 <p class="text-sm text-gray-600">
