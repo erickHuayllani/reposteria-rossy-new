@@ -6,25 +6,23 @@ export async function POST({ request }) {
     const order_id = form.get("order_id");
     const status = form.get("status");
 
-    // Validar datos
     if (!order_id || !status) {
       return new Response("Datos incompletos", { status: 400 });
     }
 
-    // Actualizar usando supabaseAdmin (sin restricciones RLS)
     const { error } = await supabaseAdmin
       .from("orders")
       .update({ status })
       .eq("id", order_id);
 
     if (error) {
-      console.error("Error supabase:", error);
+      console.error("Error Supabase:", error);
       return new Response("Error actualizando estado", { status: 500 });
     }
 
     return new Response(null, {
       status: 303,
-      headers: { Location: "/admin/pedidos" },
+      headers: { Location: "/admin/pedidos" }
     });
 
   } catch (err) {
