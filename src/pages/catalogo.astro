@@ -1,61 +1,98 @@
 ---
-import BaseLayout from '../layouts/BaseLayout.astro';
-import CatalogReactWrapper from '../components/cart/CatalogReactWrapper.jsx';
-import { supabase } from '../lib/supabase.js';
+import Layout from "../layouts/BaseLayout.astro";
+import CatalogReactWrapper from "../components/cart/CatalogReactWrapper.jsx";
+import { supabase } from "../lib/supabase.js";
 
-// Obtener productos desde Supabase
+console.log("🐱‍👤 URL:", import.meta.env.PUBLIC_SUPABASE_URL);
+console.log("🐱‍👤 KEY existe:", import.meta.env.PUBLIC_SUPABASE_ANON_KEY ? "SI" : "NO");
+
 const { data: products, error } = await supabase
   .from("productos")
   .select("*")
   .order("created_at", { ascending: false });
 
-if (error) {
-  console.error("Error cargando productos:", error);
-}
+console.log("📦 Productos recibidos:", products);
+console.log("❌ Error:", error);
 ---
-
-<BaseLayout title="Catálogo - Repostería D'Rossy">
-
+<Layout title="Catálogo - Repostería D'Rossy">
   <div class="min-h-screen bg-gradient-to-b from-yellow-50 to-orange-50 p-6">
     <h1 class="text-4xl font-bold mb-8 text-center text-orange-600 drop-shadow-lg">
       🌟 Catálogo de Productos 🌟
     </h1>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      {products?.length > 0 ? (
-        <CatalogReactWrapper client:load />
-      ) : (
-        <p class="text-gray-500 text-lg col-span-full text-center mt-4">
-          No hay productos disponibles.
-        </p>
-      )}
-    </div>
+    {error && <p class="text-red-500 text-center mb-4">Error cargando productos: {error.message}</p>}
+
+    <CatalogReactWrapper products={products} client:load />
   </div>
 
   <style>
-    /* Animación de entrada de las tarjetas */
+    .product-card {
+      background: white;
+      border-radius: 2rem;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 1.5rem;
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+      animation: fadeInUp 0.5s ease forwards;
+    }
+
+    .product-card:hover {
+      transform: translateY(-5px) scale(1.03);
+      box-shadow: 0 15px 35px rgba(0,0,0,0.18);
+    }
+
+    .product-card img {
+      width: 100%;
+      height: 200px;
+      object-fit: cover;
+      border-radius: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .product-card h3 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+      color: #c05621; /* naranja oscuro */
+    }
+
+    .product-card p {
+      font-size: 1rem;
+      color: #4a5568; /* gris */
+      margin-bottom: 1rem;
+    }
+
+    .add-to-cart-btn {
+      background-color: #f97316;
+      color: white;
+      padding: 0.75rem 1rem;
+      border-radius: 1rem;
+      font-weight: 600;
+      text-align: center;
+      transition: transform 0.2s ease, background-color 0.2s ease;
+    }
+
+    .add-to-cart-btn:hover {
+      transform: scale(1.05);
+      background-color: #ea580c;
+    }
+
     @keyframes fadeInUp {
       from { opacity: 0; transform: translateY(20px); }
       to { opacity: 1; transform: translateY(0); }
     }
 
-    .product-card {
-      animation: fadeInUp 0.5s ease forwards;
-      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    .toast {
+      animation: fadeInUp 0.4s ease forwards;
+      z-index: 50;
     }
 
-    .product-card:hover {
-      transform: scale(1.05);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.15);
-    }
-
-    .add-to-cart-btn {
-      transition: transform 0.2s ease, background-color 0.2s ease;
-    }
-
-    .add-to-cart-btn:hover {
-      transform: scale(1.1);
-      background-color: #16a34a; /* verde más intenso */
+    @media (max-width: 768px) {
+      .product-card img {
+        height: 180px;
+      }
     }
   </style>
-</BaseLayout>
+</Layout>
